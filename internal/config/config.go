@@ -30,14 +30,11 @@ type Config struct {
 	Logger *logger.LoggerConfig `json:"log"`
 }
 
-// Load führt das 3-stufige Lade-Verfahren durch:
-// Stufe 1: Defaults -> Stufe 2: Config-File (falls vorhanden) -> Stufe 3: ENV-Overrides
-// func Load(configFilePath string, log *logger.Logger) Config {
-func Load(arguments []string) Config {
+// Load performs the 3-stage loading process:
+// Stage 1: Defaults -> Stage 2: Config file (if present) -> Stage 3: ENV overrides
+func Load(configFilePath string) Config {
 
-	var configFilePath string
-
-	// Stufe 1: Harte Defaults im Code
+	// Stage 1: Hard Defaults in Code
 	cfg := Config{
 		EnvDir:            "./env",
 		RPCAddr:           ":9090",
@@ -51,11 +48,7 @@ func Load(arguments []string) Config {
 		},
 	}
 
-	// Stufe 2: Config-Datei einlesen (falls vorhanden)
-	configFilePath = ""
-	if len(arguments) > 0 {
-		configFilePath = arguments[0]
-	}
+	// Stage 2: reasd Config-File (if present)
 	if configFilePath == "" {
 		if _, err := os.Stat("config.json"); err == nil {
 			configFilePath = "config.json"
@@ -65,7 +58,7 @@ func Load(arguments []string) Config {
 	if configFilePath != "" {
 		if fileBytes, err := os.ReadFile(configFilePath); err == nil {
 			if err := json.Unmarshal(fileBytes, &cfg); err != nil {
-				log.Printf("Failed to parse config file %s, falling back to defaults. err: %v", configFilePath, err)
+				log.Printf("Failed to parse config file %s, falling back to defaults. err: %s", configFilePath, err.Error())
 			} else {
 				log.Printf("Loaded configuration from file %s", configFilePath)
 			}
@@ -74,7 +67,7 @@ func Load(arguments []string) Config {
 		}
 	}
 
-	// Stufe 3: ENV-Variablen überschreiben bestehende Werte (Höchste Priorität)
+	// Stage 3:ENV variables override existing values ​​(highest priority)
 	applyEnvOverrides(&cfg)
 
 	return cfg

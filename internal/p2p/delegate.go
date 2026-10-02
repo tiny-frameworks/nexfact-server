@@ -19,35 +19,50 @@ import (
 	"codeberg.org/tiny-frameworks/nexutils/p2p/rpc"
 )
 
+// ServerDelegate controls the RPC methods of nexfact-server
 type ServerDelegate struct {
 	rpc.DefaultNexDelegate
 	log *slog.Logger
 	o   *orchestrator.Orchestrator
 }
 
-func NewDelegate(orch *orchestrator.Orchestrator, addr string, heartbeat time.Duration, lgr *slog.Logger) *rpc.Node {
+// NewDelegate creates the RPC node with the ServerDelegate and injects the UserAuthenticator.
+func NewDelegate(orch *orchestrator.Orchestrator, addr string, heartbeat time.Duration, auth rpc.UserAuthenticator, lgr *slog.Logger) *rpc.Node {
 
-	oNode := rpc.NewNode(rpc.Options{
+	delegate := &ServerDelegate{
+		log: lgr,
+		o:   orch,
+	}
+
+	// Set the provided authenticator (or fall back to dummy)
+	delegate.SetAuthenticator(auth)
+
+	return rpc.NewNode(rpc.Options{
 		Addr:              addr,
 		HeartbeatInterval: heartbeat,
-		Delegate: &ServerDelegate{
-			log: lgr,
-			o:   orch,
-		},
+		Delegate:          delegate,
 	})
-
-	return oNode
 }
 
 func (d *ServerDelegate) OnRequest(ctx context.Context, peer *rpc.Peer, method string, params []byte) (any, error) {
 	switch method {
 	case "nexfact.process":
+		// Optional safeguard: Check if the peer is authorized
+		if !peer.IsAuthorized() {
+			nexErr := errors.New(
+				errors.UnauthorizedError,
+				"forbidden, not authorizes",
+				"nexfact-server.internal.p2p.delegate",
+			)
+			return nil, rpc.NewRPCErrorFromNexError(rpc.InvalidRequest, nexErr)
+		}
 		return d.privateProcess(peer, params)
 
-	case "nexfact.echo":
+	case "system.echo":
 		return d.privateEcho(peer, params)
 
 	default:
+		// "auth" und unknowm methods fallback to DefaultNexDelegate!
 		return d.DefaultNexDelegate.OnRequest(ctx, peer, method, params)
 	}
 }
@@ -56,7 +71,13 @@ func (d *ServerDelegate) privateEcho(peer *rpc.Peer, params []byte) (any, error)
 	var echo string
 
 	if err := json.Unmarshal(params, &echo); err != nil {
-		return nil, &rpc.JsonRPCerror{Code: rpc.InvalidParams, Message: rpc.StdError[rpc.InvalidParams]}
+		nexErr := errors.Wrap(
+			errors.InvalidFormat,
+			"invalid params",
+			"nexfact-server.internal.p2p.delegate",
+			err,
+		)
+		return nil, rpc.NewRPCErrorFromNexError(rpc.InvalidParams, nexErr)
 	}
 	d.log.Info("[Echo] Received echo request from partner", "params", params, "peer", peer.RemoteAddr())
 	return "Echo: " + echo, nil
@@ -74,7 +95,7 @@ func (d *ServerDelegate) privateProcess(peer *rpc.Peer, params []byte) (any, err
 	}
 	d.log.Info("nexfact.process", "peer", peer.RemoteAddr())
 
-	// 1. Staging Directory anlegen & Fehler abfangen
+	// 1. Create staging directory & handle errors
 	tempDir, err := os.MkdirTemp("", "nexfact_stage_*")
 	if err != nil {
 		nerr := errors.Wrap(errors.ExecutionError,
@@ -85,7 +106,7 @@ func (d *ServerDelegate) privateProcess(peer *rpc.Peer, params []byte) (any, err
 	}
 	defer os.RemoveAll(tempDir)
 
-	// 2. Preprocessing mit typsicherer errors.As Conversion
+	// 2. Preprocessing with type-safe errors.As Conversion
 	oJSON, err := PreProcess(tempDir, []byte(jsonInvoice))
 	if err != nil {
 		var nerr *errors.Error
@@ -98,7 +119,7 @@ func (d *ServerDelegate) privateProcess(peer *rpc.Peer, params []byte) (any, err
 		return nil, rpc.NewRPCErrorFromNexError(rpc.InternalError, nerr)
 	}
 
-	// 3. Orchestrator-Ausführung
+	// 3. Orchestrator execution
 	out, err := d.o.RunJsonJob(oJSON)
 	if err != nil {
 		var nerr *errors.Error
@@ -111,7 +132,7 @@ func (d *ServerDelegate) privateProcess(peer *rpc.Peer, params []byte) (any, err
 		return nil, rpc.NewRPCErrorFromNexError(rpc.InternalError, nerr)
 	}
 
-	// 4. Ausgabedatei einlesen (Serverseitiger Fehler -> InternalError)
+	// 4. Read output file (server-side error -> InternalError)
 	outBytes, err := os.ReadFile(out.OutputPath)
 	if err != nil {
 		nerr := errors.Wrap(errors.ReadError,

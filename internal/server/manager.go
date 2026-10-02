@@ -26,10 +26,14 @@ type Manager struct {
 
 func NewManager(cfg config.Config, orch *orchestrator.Orchestrator, lgr *slog.Logger) *Manager {
 
-	// Erzeugt den RPC Node (erhält intern sein eigenes Context)
-	delegate := p2p.NewDelegate(orch, cfg.RPCAddr, cfg.HeartbeatInterval, lgr)
+	// Instantiate the real authenticator here (e.g., from DB/config)
+	// (Or leave as nil for the DummyAuthenticator)
+	var userAuth rpc.UserAuthenticator // = myUserStore
 
-	// Erzeugt den Directory Watcher
+	// Creates the RPC node, including the UserAuthenticator
+	delegate := p2p.NewDelegate(orch, cfg.RPCAddr, cfg.HeartbeatInterval, userAuth, lgr)
+
+	// Creates Directory Watcher
 	dirWatcher := watcher.New(config.Config{
 		WatchDir:     cfg.WatchDir,
 		ProcessedDir: cfg.ProcessedDir,
@@ -49,12 +53,12 @@ func NewManager(cfg config.Config, orch *orchestrator.Orchestrator, lgr *slog.Lo
 func (m *Manager) Start(ctx context.Context) error {
 	m.log.Info("Starting nexfact-server services...")
 
-	// 1. Directory Watcher starten (nutzt runCtx für Ticker-Loop)
+	// 1. Start directory watcher (uses runCtx for ticker loop)
 	if err := m.watcher.Start(ctx); err != nil {
 		return err
 	}
 
-	// 2. RPC Node im Hintergrund starten (da ListenAndServe blockiert)
+	// 2. Start the RPC node in the background (since ListenAndServe blocks)
 	go func() {
 		if err := m.rpcDelegate.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			m.log.Error("RPC Node HTTP server error", "err", err)
@@ -67,10 +71,10 @@ func (m *Manager) Start(ctx context.Context) error {
 func (m *Manager) Stop(ctx context.Context) error {
 	m.log.Info("Stopping nexfact-server services...")
 
-	// 1. Directory Watcher stoppen
+	// 1. Stop Directory Watcher
 	m.watcher.Stop()
 
-	// 2. RPC Node geordnet herunterfahren (schließt Peers & HTTP-Server)
+	// 2. Shut down RPC node gracefully (closes peers & HTTP server)
 	if err := m.rpcDelegate.Stop(); err != nil {
 		m.log.Error("Error stopping RPC Node", "err", err)
 		return err

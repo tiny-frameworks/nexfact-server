@@ -5,8 +5,10 @@ package main
 
 import (
 	"context"
+	"flag"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -18,16 +20,29 @@ import (
 	"codeberg.org/tiny-frameworks/nexutils/logger"
 )
 
+var (
+	cfgFile string
+	envDir  string
+)
+
 func main() {
-	// os.Exit wird NUR HIER aufgerufen, damit defers in run() sicher ausführen!
+	// os.Exit is called ONLY HERE so that defers in run() execute safely!
 	os.Exit(run())
 }
 
-func run() int {
-	// 1. Config aus ENV / File / Defaults laden
-	cfg := config.Load(os.Args[1:])
+func init() {
+	flag.StringVar(&cfgFile, "config", "./config.json", "configuration-file")
+	flag.StringVar(&envDir, "env", "./env", "env directory for orchestrator")
+}
 
-	// 2. Logger aufsetzen
+func run() int {
+
+	// 1. load Config from ENV / File / Defaults
+	flag.Parse()
+	cfgPath, _ := filepath.Abs(cfgFile)
+	cfg := config.Load(cfgPath)
+
+	// 2. setup Logger
 	logger.SetupLogging(cfg.Logger)
 	lgr := logger.Logger.With("component", "nexfact-service", "role", "server")
 	lgr.Info("=== Start nexfact-service ===")
@@ -39,12 +54,12 @@ func run() int {
 		"log_level", cfg.Logger.Level,
 	)
 
-	// 3. Staging-/Watch-Verzeichnisse automatisch erstellen
+	// 3. create Staging-/Watch-Directory
 	for _, dir := range []string{cfg.WatchDir, cfg.ProcessedDir, cfg.ErrorDir} {
 		_ = os.MkdirAll(dir, 0755)
 	}
 
-	// 4. Laufzeit-Context für den DirectoryWatcher & Background Tasks
+	// 4. Runtime-Context for DirectoryWatcher & Background Tasks
 	runCtx, cancelRun := context.WithCancel(context.Background())
 	defer cancelRun()
 
@@ -54,26 +69,26 @@ func run() int {
 		return errors.GetExitCode(err)
 	}
 
-	// 5. Manager erhält Config, Orchestrator und Logger (Node wird hier erzeugt)
+	// 5.Manager receives config, orchestrator, and logger (node ​​is created here)
 	srvManager := server.NewManager(cfg, orch, lgr)
 
-	// Dienste mit dem Laufzeit-Context starten (Watcher nutzt runCtx, Node startet im Hintergrund)
+	// Start services with the runtime context (Watcher uses runCtx, node starts in the background)
 	if err := srvManager.Start(runCtx); err != nil {
 		errors.LogError(lgr, err)
 		return errors.GetExitCode(err)
 	}
 
-	// 6. Warten auf OS Signals (SIGINT, SIGTERM)
+	// 6. Wait for OS Signals (SIGINT, SIGTERM)
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	<-sigChan
 
 	lgr.Info("Shutdown signal received, stopping services...")
 
-	// Laufzeit-Context beenden (stoppt die Schleife im DirectoryWatcher)
+	// Terminate runtime context (stops the loop in the DirectoryWatcher)
 	cancelRun()
 
-	// Dedizierter Timeout-Context für das geordnete Beenden
+	// Dedicated timeout context for orderly shutdown
 	shutdownCtx, cancelShutdown := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancelShutdown()
 

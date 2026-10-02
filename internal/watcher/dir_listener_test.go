@@ -54,28 +54,28 @@ func TestDirectoryWatcherProcessesValidJson(t *testing.T) {
 		t.Fatalf("failed to start watcher: %v", err)
 	}
 
-	// 1. Test-Datei im watchDir erstellen
+	// 1. create Test-File in watchDir
 	testSource := filepath.Join(testEnvParent, "resources", jsonFileName)
 	testFile := filepath.Join(watchDir, jsonFileName)
 	tmpFile := filepath.Join(tempDir, jsonFileName)
 
 	atomicCopy(t, testSource, testFile, tmpFile)
 
-	// 2. Warten bis der Ticker-Intervall gegriffen hat
+	// 2.Wait until the ticker interval has taken effect.
 	time.Sleep(200 * time.Millisecond)
 
-	// 3. Prüfen: Datei muss aus watchDir verschwunden sein
+	// 3. Check: File must have disappeared from watchDir.
 	if _, err := os.Stat(testFile); !os.IsNotExist(err) {
 		t.Errorf("file still exists in watch_dir, should have been moved")
 	}
 
-	// 4. Prüfen: Datei muss im processedDir gelandet sein
+	// 4. Check: File must have ended up in processedDir.
 	processedFile := filepath.Join(processedDir, jsonFileName)
 	if _, err := os.Stat(processedFile); os.IsNotExist(err) {
 		t.Errorf("file was not moved to processed_dir")
 	}
 
-	// Watcher beenden
+	// stop Watcher
 	cancel()
 	w.Stop()
 }
@@ -83,18 +83,18 @@ func TestDirectoryWatcherProcessesValidJson(t *testing.T) {
 func getTestEnvParent(t *testing.T) string {
 	t.Helper()
 
-	// 1. Prüfe ob eine ENV-Variable gesetzt ist (z.B. in go.work / lokalen Tests)
+	// 1.Check if an environment variable is set (e.g., in go.work / local tests)
 	if envPath := os.Getenv("NEXFACT_TEST_ENV_PARENT"); envPath != "" {
 		return envPath
 	}
 
-	// 2. Fallback auf lokales lüttes testdata Ordnerchen im Repo
+	// 2. Fallback to the small local test data folder in the repo.
 	localPath := filepath.Join("testdata", "testenv")
 	if _, err := os.Stat(localPath); err == nil {
 		return localPath
 	}
 
-	// 3. Fallback auf relatives nexfact Nachbar-Repo
+	// 3. Fallback to relative next-to-neighbor repo
 	relPath := filepath.Join("..", "..", "..", "nexfact", "orchestrator", "testdata")
 	absFile, err := filepath.Abs(relPath)
 	if err != nil {
@@ -108,7 +108,7 @@ func getTestEnvParent(t *testing.T) string {
 	return ""
 }
 
-// AtomicCopy kopiert srcPath nach dstPath atomar.
+// AtomicCopy copies srcPath nach dstPath atomar.
 func atomicCopy(t *testing.T, srcPath, dstPath, tmpPath string) {
 	t.Helper()
 
@@ -138,7 +138,7 @@ func atomicCopy(t *testing.T, srcPath, dstPath, tmpPath string) {
 		t.Fatalf("failed copy to destination file: %s", err.Error())
 	}
 
-	// ATOMARER SCHRITT: Umbenennen im Zielverzeichnis
+	// ATOMIC STEP: rename in targetDirectory
 	if err := os.Rename(tmpPath, dstPath); err != nil {
 		t.Fatalf("failed to replace target file: %s", err.Error())
 	}

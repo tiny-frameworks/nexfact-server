@@ -21,7 +21,7 @@ type DirectoryWatcher struct {
 	cfg  config.Config
 	orch *orchestrator.Orchestrator
 	log  *slog.Logger
-	wg   sync.WaitGroup // Trackt aktive Batch-Verarbeitungen
+	wg   sync.WaitGroup // Trackt aktive Batch-Processes
 }
 
 func New(cfg config.Config, orch *orchestrator.Orchestrator, log *slog.Logger) *DirectoryWatcher {
@@ -31,7 +31,7 @@ func New(cfg config.Config, orch *orchestrator.Orchestrator, log *slog.Logger) *
 	return &DirectoryWatcher{cfg: cfg, orch: orch, log: log}
 }
 
-// Start startet die Ticker-Schleife in einer eigenen Goroutine
+// Start starts Ticker-Loop in own Goroutine
 func (w *DirectoryWatcher) Start(ctx context.Context) error {
 	w.wg.Add(1)
 	go func() {
@@ -41,10 +41,10 @@ func (w *DirectoryWatcher) Start(ctx context.Context) error {
 	return nil
 }
 
-// Stop wartet, bis die laufende Goroutine inkl. offener Jobs beendet ist
+// Stop waits until the running goroutine, including any pending jobs, has finished.
 func (w *DirectoryWatcher) Stop() {
-	// Der Context wurde bereits von der main.go / dem Manager gecancelt.
-	// Hier warten wir nur noch darauf, dass die Schleife sauber ausläuft.
+	// The context has already been cancelled by main.go / the manager.
+	// Here, we are simply waiting for the loop to exit cleanly.
 	w.wg.Wait()
 	w.log.Info("DirectoryWatcher stopped cleanly")
 }
@@ -53,25 +53,25 @@ func (w *DirectoryWatcher) loop(ctx context.Context) {
 	ticker := time.NewTicker(w.cfg.PollInterval)
 	defer ticker.Stop()
 
-	// SOFORTIGER erster Scan beim Anlaufen
+	// IMMEDIATE initial scan upon startup
 	w.processFiles(ctx)
 
 	for {
 		select {
 		case <-ctx.Done():
-			// Context gecancelt -> Ticker-Schleife sofort beenden
+			// Context cancelled -> immediately terminate ticker loop
 			w.log.Info("DirectoryWatcher stopping signal received...")
 			return
 
 		case <-ticker.C:
-			// Verarbeite Verzeichnisinhalte
+			// Process directory contents
 			w.processFiles(ctx)
 		}
 	}
 }
 
 func (w *DirectoryWatcher) processFiles(ctx context.Context) {
-	// Prüfen, ob der Context vor dem Verzeichnis-Scan abgebrochen wurde
+	// Check if the context was cancelled before the directory scan
 	select {
 	case <-ctx.Done():
 		return
@@ -94,12 +94,12 @@ func (w *DirectoryWatcher) processFiles(ctx context.Context) {
 		if entry.IsDir() || filepath.Ext(entry.Name()) != ".json" {
 			continue
 		}
-		// Bei jedem Iterationsschritt Shutdown-Signal prüfen
+		// Check for a shutdown signal at each iteration step.
 		select {
 		case <-ctx.Done():
 			return
 		default:
-			// Vollständigen Pfad erzeugen
+			// Generate full path
 			fullPath := filepath.Join(w.cfg.WatchDir, entry.Name())
 			w.processSingleFile(fullPath)
 		}
@@ -122,7 +122,7 @@ func (w *DirectoryWatcher) processSingleFile(fileToProcess string) {
 
 	fileName := filepath.Base(fileToProcess)
 
-	// Übergabe an das modulare nexfact Engine-Core
+	// Handover to the modular nexfact Engine Core
 	out, err := w.orch.RunJsonJob(jsonBytes)
 	if err != nil {
 		errors.LogError(w.log, err)

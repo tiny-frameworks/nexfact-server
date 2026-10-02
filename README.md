@@ -6,8 +6,7 @@
 [![Go Version](https://img.shields.io/badge/Go-1.26%2B-00ADD8?logo=go&logoColor=white)](https://go.dev/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-| | |
-|----|----|
+
 |![GSF-NexFact-Logo](nexfact.png)| ***GSF-NexFact-Server***<br>the service host and application adapter for the **GSF-Nexfact** invoice processing engine.|
 
 <sup>***GSF*** stands for ***Go Small Frameworks*** — minimalist tools for robust applications.</sup>
