@@ -5,24 +5,17 @@ package main
 
 import (
 	"context"
-	"flag"
+	"fmt"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 	"time"
 
 	"codeberg.org/tiny-frameworks/nexfact-server/internal/config"
 	"codeberg.org/tiny-frameworks/nexfact-server/internal/server"
 	"codeberg.org/tiny-frameworks/nexfact/orchestrator"
-
 	"codeberg.org/tiny-frameworks/nexutils/errors"
 	"codeberg.org/tiny-frameworks/nexutils/logger"
-)
-
-var (
-	cfgFile string
-	envDir  string
 )
 
 func main() {
@@ -30,17 +23,14 @@ func main() {
 	os.Exit(run())
 }
 
-func init() {
-	flag.StringVar(&cfgFile, "config", "./config.json", "configuration-file")
-	flag.StringVar(&envDir, "env", "./env", "env directory for orchestrator")
-}
-
 func run() int {
 
 	// 1. load Config from ENV / File / Defaults
-	flag.Parse()
-	cfgPath, _ := filepath.Abs(cfgFile)
-	cfg := config.Load(cfgPath)
+	cfg, err := config.Load()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to load configuration: %v\n", err)
+		return 1
+	}
 
 	// 2. setup Logger
 	logger.SetupLogging(cfg.Logger)
@@ -56,7 +46,10 @@ func run() int {
 
 	// 3. create Staging-/Watch-Directory
 	for _, dir := range []string{cfg.WatchDir, cfg.ProcessedDir, cfg.ErrorDir} {
-		_ = os.MkdirAll(dir, 0755)
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			lgr.Error("failed to create directory", "dir", dir, "err", err)
+			return 1
+		}
 	}
 
 	// 4. Runtime-Context for DirectoryWatcher & Background Tasks

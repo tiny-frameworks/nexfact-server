@@ -71,13 +71,13 @@ This project is part of the **tiny-frameworks** initiative.
 nexfact-server/
 ├── cmd/
 │   └── nexfact-server/
-│       └── main.go          # Application Entrypoint & Signal Handling
+│       ├── main.go              # Application Entrypoint & Signal Handling
+│       └── config.yaml.example  # Sample configuration file
 ├── internal/
-│   ├── config/              # 3-Stage Configuration Management
-│   ├── p2p/                 # P2P JSON-RPC Delegate & Adapter
-│   ├── server/              # Lifecycle Manager (P2P Node + Watcher)
-│   └── watcher/             # Atomic Directory Watcher
-├── config.json.example      # Sample configuration file
+│   ├── config/                  # 3-Stage Configuration Management
+│   ├── p2p/                     # P2P JSON-RPC Delegate & Adapter
+│   ├── server/                  # Lifecycle Manager (P2P Node + Watcher)
+│   └── watcher/                 # Atomic Directory Watcher
 ├── go.mod
 └── README.md
 
@@ -85,44 +85,77 @@ nexfact-server/
 
 ---
 
-## Configuration (3-Stage Precedence)
+## Configuration (4-Stage Precedence)
 
-Configuration follows a 3-stage hierarchy (**higher stages override lower ones**):
+`nexfact-server` uses a 4-tier configuration precedence model (**higher priority overrides lower priority**):
 
-1. **Environment Variables** (Highest Precedence)
-2. **Configuration File** (`config.json`)
-3. **Defaults** (Hardcoded fallback values)
+1. **CLI Flags** (Highest Priority)
+2. **Environment Variables** (`NEXGATE_`)
+3. **YAML Configuration File** (`config.yaml`)
+4. **Code Defaults** (Fallback values inside the application)
 
-### Environment Variables
+---
 
-| Variable | Default | Description |
-| --- | --- | --- |
-| `NEXFACT_ENV_DIR` | `./env` | Path to the nexfact environment directory |
-| `NEXFACT_RPC_ADDR` | `:9090` | Listening address for the P2P WebSocket RPC server |
-| `NEXFACT_HEARTBEAT_INT` | `30s` | Interval for P2P peer heartbeats |
-| `NEXFACT_WATCH_DIR` | `./data/input` | Input folder for the directory watcher |
-| `NEXFACT_PROCESSED_DIR` | `./data/processed` | Destination folder for successfully processed jobs |
-| `NEXFACT_ERROR_DIR` | `./data/error` | Destination folder for failed jobs |
-| `NEXFACT_POLL_INT` | `2s` | Polling interval for the directory watcher |
-| `NEXFACT_LOG_LEVEL` | `info` | Logging level (`debug`, `info`, `warn`, `error`) |
+### Configuration File (`config.yaml`)
 
-### Configuration File (`config.json`)
+By default, the application looks for a `config.yaml` file in the current working directory (or at the path specified via `-cfgFile`).
 
-Optionally, a `config.json` file can be passed via command-line flags or placed in the working directory:
+```yaml
+# nexfact-server configuration
+env_dir: "./env"
+rpc_addr: "127.0.0.1:8080"
 
-```json
-{
-  "env_dir": "/var/lib/nexfact/env",
-  "rpc_addr": "0.0.0.0:9090",
-  "heartbeat_interval": "30s",
-  "watch_dir": "./data/input",
-  "processed_dir": "./data/processed",
-  "error_dir": "./data/error",
-  "poll_interval": "2s",
-  "logger": {
-    "level": "info"
-  }
-}
+# Directory Watcher paths
+watch_dir: "./watch"
+processed_dir: "./processed"
+error_dir: "./error"
+
+# Time intervals (parsed natively as Go time.Duration)
+poll_interval: 2s
+heartbeat_interval: 5s
+
+# Logging
+log_level: "info"
+
+```
+
+---
+
+### Precedence & Parameter Matrix
+
+| CLI Flag | Environment Variable | Config YAML Key | Default | Description |
+| --- | --- | --- | --- | --- |
+| `-cfgFile` | — | — | `config.yaml` | Path to the YAML configuration file |
+| `-env` | `NEXGATE_ENV_DIR` | `env_dir` | `./env` | Path to the `nexfact` environment directory |
+| `-rpc-addr` | `NEXGATE_RPC_ADDR` | `rpc_addr` | `127.0.0.1:8080` | Address for P2P WebSocket RPC binding |
+| `-watch-dir` | `NEXGATE_WATCH_DIR` | `watch_dir` | `./watch` | Directory monitored for incoming invoices |
+| `-processed-dir` | `NEXGATE_PROCESSED_DIR` | `processed_dir` | `./processed` | Directory where successfully processed invoices are moved |
+| `-error-dir` | `NEXGATE_ERROR_DIR` | `error_dir` | `./error` | Directory where failed invoices are moved |
+| `-poll-interval` | `NEXGATE_POLL_INTERVAL` | `poll_interval` | `2s` | Polling interval for directory watcher (e.g. `2s`, `500ms`) |
+| `-heartbeat` | `NEXGATE_HEARTBEAT_INTERVAL` | `heartbeat_interval` | `5s` | Heartbeat interval for P2P WebSocket nodes |
+| `-log-level` | `NEXGATE_LOG_LEVEL` | `log_level` | `info` | Log severity level (`debug`, `info`, `warn`, `error`) |
+
+---
+
+### Example Usage
+
+#### Using CLI Overrides
+
+Override specific parameters directly from the terminal without changing the configuration file:
+
+```bash
+./nexfact-server -cfgFile /etc/nexfact/config.yaml -log-level debug -poll-interval 1s
+
+```
+
+#### Using Environment Variables
+
+Ideal for Docker container deployments:
+
+```bash
+export NEXGATE_RPC_ADDR="0.0.0.0:8080"
+export NEXGATE_LOG_LEVEL="warn"
+./nexfact-server
 
 ```
 

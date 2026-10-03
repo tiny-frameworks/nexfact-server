@@ -17,14 +17,14 @@ import (
 )
 
 type Manager struct {
-	cfg         config.Config
+	cfg         *config.Config
 	log         *slog.Logger
 	orch        *orchestrator.Orchestrator
 	rpcDelegate *rpc.Node
 	watcher     *watcher.DirectoryWatcher
 }
 
-func NewManager(cfg config.Config, orch *orchestrator.Orchestrator, lgr *slog.Logger) *Manager {
+func NewManager(cfg *config.Config, orch *orchestrator.Orchestrator, lgr *slog.Logger) *Manager {
 
 	// Instantiate the real authenticator here (e.g., from DB/config)
 	// (Or leave as nil for the DummyAuthenticator)

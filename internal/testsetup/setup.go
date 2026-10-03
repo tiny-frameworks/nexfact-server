@@ -1,4 +1,6 @@
-// setup.go
+// Copyright 2026 Georg Hagn
+// SPDX-License-Identifier: Apache-2.0
+
 package testsetup
 
 import (
@@ -14,14 +16,14 @@ const ( // provider consts
 	NATIVE    = "native"
 )
 
-// SetupTestEnv kopiert das zentrale testdata-Verzeichnis isoliert in ein TempDir
+// SetupTestEnv copies the central testdata directory into a temporary directory in isolation.
 func SetupTestEnv(t *testing.T, provider string) (env, resources string) {
 	t.Helper()
 
-	// 1. Pfad zum zentralen testdata-Repository suchen (relativ oder per ENV)
+	// 1. Locate the path to the central testdata repository (relative or via ENV)
 	sourceEnv := os.Getenv("NEXFACT_TESTDATA_DIR")
 	if sourceEnv == "" {
-		// Relative Suche im Workspace (Projekte liegen nebeneinander)
+		// Relative search within the workspace (projects are located side-by-side)
 		sourceEnv = filepath.Join("..", "..", "..", "nexfact-assets", "testdata")
 	}
 
@@ -29,10 +31,10 @@ func SetupTestEnv(t *testing.T, provider string) (env, resources string) {
 		t.Skipf("Skipping test: testdata repository not found at %s", sourceEnv)
 	}
 
-	// 2. Isolierter Ziel-Ordner im Go-TempDir
+	// 2. Isolated target folder in the Go TempDir
 	targetEnv := filepath.Join(t.TempDir(), "testdata")
 
-	// 3. Verzeichnis kopieren
+	// 3. copy directory
 	if err := copyDir(sourceEnv, targetEnv); err != nil {
 		t.Fatalf("failed to copy test env: %v", err)
 	}
@@ -40,7 +42,7 @@ func SetupTestEnv(t *testing.T, provider string) (env, resources string) {
 	return setupProvider(provider, targetEnv)
 }
 
-// Hilfsfunktion: Findet einen freien Port für isolierte Tests
+// Helper function: Finds a free port for isolated tests.
 func GetFreeAddr(t *testing.T) string {
 	t.Helper()
 	l, err := net.Listen("tcp", "127.0.0.1:0")
@@ -51,7 +53,7 @@ func GetFreeAddr(t *testing.T) string {
 	return l.Addr().String()
 }
 
-// Hilfsfunktion: Rekursives Kopieren von Verzeichnissen
+// Helper function: Recursive directory copying
 func copyDir(src, dst string) error {
 	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -90,7 +92,7 @@ func copyFile(src, dst string) error {
 	return out.Sync()
 }
 
-// Hilfsfunktion: system.yaml abhängig von 'provider' kopieren
+// Helper function: Copy system.yaml based on 'provider'
 func setupProvider(provider string, targetDir string) (envRoot string, resourcePath string) {
 	envRoot, _ = filepath.Abs(filepath.Join(targetDir, "env"))
 	resourcePath, _ = filepath.Abs(filepath.Join(targetDir, "resources"))
