@@ -72,7 +72,8 @@ Das Projekt ist Teil der **tiny-frameworks** Initiative.
 nexfact-server/
 ├── cmd/
 │   └── nexfact-server/
-│       └── main.go          # Application Entrypoint & Signal Handling
+│       ├── main.go              # Application Entrypoint & Signal Handling
+│       └── config.yaml.example  # Sample configuration file
 ├── internal/
 │   ├── config/              # 3-Stage Configuration Management
 │   ├── p2p/                 # P2P JSON-RPC Delegate & Adapter
