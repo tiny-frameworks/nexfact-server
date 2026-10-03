@@ -86,44 +86,78 @@ nexfact-server/
 
 ---
 
-## Configuration (3-Stage Precedence)
+## Konfiguration (4-Stufen Hierarchie Modell)
 
-Die Konfiguration erfolgt nach einem 3-stufigen Hierarchie-Modell (**Höchste Priorität überschreibt niedrigere**):
+`nexfact-server` verwendet ein vierstufiges Modell für die Konfigurationspriorität (**höhere Priorität überschreibt niedrigere**):
 
-1. **Environment Variables** (Höchste Priorität)
-2. **Configuration File** (`config.json`)
-3. **Defaults** (Harte Standardwerte im Code)
+1. **CLI-Flags** (höchste Priorität)
+2. **Umgebungsvariablen** (`NEXFACT_`)
+3. **YAML-Konfigurationsdatei** (`config.yaml`)
+4. **Code-Standardwerte** (Fallback-Werte innerhalb der Anwendung)
 
-### Environment Variables
+---
 
-| Variable | Default | Description |
-| --- | --- | --- |
-| `NEXFACT_ENV_DIR` | `./env` | Pfad zum nexfact Environment-Verzeichnis |
-| `NEXFACT_RPC_ADDR` | `:9090` | Listen-Adresse für den P2P WebSocket RPC Server |
-| `NEXFACT_HEARTBEAT_INT` | `30s` | Intervall für P2P Peer Heartbeats |
-| `NEXFACT_WATCH_DIR` | `./data/input` | Eingangsordner für den Directory Watcher |
-| `NEXFACT_PROCESSED_DIR` | `./data/processed` | Zielordner für erfolgreich verarbeitete Jobs |
-| `NEXFACT_ERROR_DIR` | `./data/error` | Zielordner für fehlgeschlagene Jobs |
-| `NEXFACT_POLL_INT` | `2s` | Abfrageintervall des Directory Watchers |
-| `NEXFACT_LOG_LEVEL` | `info` | Log-Level (`debug`, `info`, `warn`, `error`) |
+### Konfigurations Datei (`config.yaml`)
 
-### Configuration File (`config.json`)
+Standardmäßig sucht die Anwendung nach einer `config.yaml`-Datei im aktuellen
+Arbeitsverzeichnis (oder an dem über `-cfgFile` angegebenen Pfad).
 
-Optional kann beim Start eine `config.json` übergeben oder im Arbeitsverzeichnis hinterlegt werden:
+```yaml
+# nexfact-server configuration
+env_dir: "./env"
+rpc_addr: "127.0.0.1:8080"
 
-```json
-{
-  "env_dir": "/var/lib/nexfact/env",
-  "rpc_addr": "0.0.0.0:9090",
-  "heartbeat_interval": "30s",
-  "watch_dir": "./data/input",
-  "processed_dir": "./data/processed",
-  "error_dir": "./data/error",
-  "poll_interval": "2s",
-  "logger": {
-    "level": "info"
-  }
-}
+# Directory Watcher paths
+watch_dir: "./watch"
+processed_dir: "./processed"
+error_dir: "./error"
+
+# Time intervals (parsed natively as Go time.Duration)
+poll_interval: 2s
+heartbeat_interval: 5s
+
+# Logging
+log_level: "info"
+
+```
+
+---
+
+### Rangfolge- und Parametermatrix
+
+| CLI Variable | Environment Variable | Config YAML Key | Default | Description |
+| --- | --- | --- | --- | --- |
+| `-cfgFile` | — | — | `config.yaml` | Pfad zur YAML Konfigurationsdatei |
+| `-env` | `NEXFACT_ENV_DIR` | `env_dir` | `./env` | Pfad zum `nexfact` environment Directory |
+| `-rpc-addr` | `NEXFACT_RPC_ADDR` | `rpc_addr` | `127.0.0.1:8080` | Addresse für P2P WebSocket RPC binding |
+| `-watch-dir` | `NEXFACT_WATCH_DIR` | `watch_dir` | `./watch` | überwachtes Verzeichnis für eingehende Rechnungen |
+| `-processed-dir` | `NEXFACT_PROCESSED_DIR` | `processed_dir` | `./processed` | Verzeichnis, in das erfolgreich verarbeitete Rechnungen verschoben werden |
+| `-error-dir` | `NEXGFACT_ERROR_DIR` | `error_dir` | `./error` | Verzeichnis, in das fehlerhafte Rechnungen verschoben werden |
+| `-poll-interval` | `NEXFACT_POLL_INTERVAL` | `poll_interval` | `2s` | Polling Interval für directory watcher (e.g. `2s`, `500ms`) |
+| `-heartbeat` | `NEXFACT_HEARTBEAT_INTERVAL` | `heartbeat_interval` | `5s` | Heartbeat Interval für P2P WebSocket nodes |
+| `-log-level` | `NEXFACT_LOG_LEVEL` | `log_level` | `info` | Log severity level (`debug`, `info`, `warn`, `error`) |
+
+---
+
+### Anwendungsbeispiel
+
+#### CLI-Variable
+
+CLI Parameter überschreiben bestimmte Parameter direkt über das Terminal, ohne die Konfigurationsdatei zu ändern:
+
+```bash
+./nexfact-server -cfgFile /etc/nexfact/config.yaml -log-level debug -poll-interval 1s
+
+```
+
+### Environment Variable
+
+Ideal for Docker container deployments:
+
+```bash
+export NEXGATE_RPC_ADDR="0.0.0.0:8080"
+export NEXGATE_LOG_LEVEL="warn"
+./nexfact-server
 
 ```
 

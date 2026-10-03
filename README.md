@@ -126,14 +126,14 @@ log_level: "info"
 | CLI Flag | Environment Variable | Config YAML Key | Default | Description |
 | --- | --- | --- | --- | --- |
 | `-cfgFile` | — | — | `config.yaml` | Path to the YAML configuration file |
-| `-env` | `NEXGATE_ENV_DIR` | `env_dir` | `./env` | Path to the `nexfact` environment directory |
-| `-rpc-addr` | `NEXGATE_RPC_ADDR` | `rpc_addr` | `127.0.0.1:8080` | Address for P2P WebSocket RPC binding |
-| `-watch-dir` | `NEXGATE_WATCH_DIR` | `watch_dir` | `./watch` | Directory monitored for incoming invoices |
-| `-processed-dir` | `NEXGATE_PROCESSED_DIR` | `processed_dir` | `./processed` | Directory where successfully processed invoices are moved |
-| `-error-dir` | `NEXGATE_ERROR_DIR` | `error_dir` | `./error` | Directory where failed invoices are moved |
-| `-poll-interval` | `NEXGATE_POLL_INTERVAL` | `poll_interval` | `2s` | Polling interval for directory watcher (e.g. `2s`, `500ms`) |
-| `-heartbeat` | `NEXGATE_HEARTBEAT_INTERVAL` | `heartbeat_interval` | `5s` | Heartbeat interval for P2P WebSocket nodes |
-| `-log-level` | `NEXGATE_LOG_LEVEL` | `log_level` | `info` | Log severity level (`debug`, `info`, `warn`, `error`) |
+| `-env` | `NEXFACT_ENV_DIR` | `env_dir` | `./env` | Path to the `nexfact` environment directory |
+| `-rpc-addr` | `NEXFACT_RPC_ADDR` | `rpc_addr` | `127.0.0.1:8080` | Address for P2P WebSocket RPC binding |
+| `-watch-dir` | `NEXFACT_WATCH_DIR` | `watch_dir` | `./watch` | Directory monitored for incoming invoices |
+| `-processed-dir` | `NEXFACT_PROCESSED_DIR` | `processed_dir` | `./processed` | Directory where successfully processed invoices are moved |
+| `-error-dir` | `NEXFACT_ERROR_DIR` | `error_dir` | `./error` | Directory where failed invoices are moved |
+| `-poll-interval` | `NEXFACT_POLL_INTERVAL` | `poll_interval` | `2s` | Polling interval for directory watcher (e.g. `2s`, `500ms`) |
+| `-heartbeat` | `NEXFACT_HEARTBEAT_INTERVAL` | `heartbeat_interval` | `5s` | Heartbeat interval for P2P WebSocket nodes |
+| `-log-level` | `NEXFACT_LOG_LEVEL` | `log_level` | `info` | Log severity level (`debug`, `info`, `warn`, `error`) |
 
 ---
 
