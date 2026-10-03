@@ -1,3 +1,8 @@
+codeberg.org/tiny-frameworks/nexfact v1.0.3 h1:ZwheOWO/1wEdNCzTFy/rButtYdJeEI6r0dAOR1Zeyr4=
 codeberg.org/tiny-frameworks/nexfact v1.0.3/go.mod h1:5QwrRNFXoCga5JpHCTVNu/F+FymUUC7NJxD6kdqK8L8=
-codeberg.org/tiny-frameworks/nexutils v1.0.3 h1:02t+l3E4WZPlZuCflftLjWh4gO6OGG8BLooFVyYNTbk=
-codeberg.org/tiny-frameworks/nexutils v1.0.3/go.mod h1:D96EGmp/X0TGVeCxG/H7KCNmFkFKoRzFQ+IMlqJfavw=
+codeberg.org/tiny-frameworks/nexutils v1.0.4 h1:GSuupPy7e0GaRXhglIPC1QbvmZldCSHHGh6rFhc7wm8=
+codeberg.org/tiny-frameworks/nexutils v1.0.4/go.mod h1:D96EGmp/X0TGVeCxG/H7KCNmFkFKoRzFQ+IMlqJfavw=
+github.com/coder/websocket v1.8.15 h1:6B2JPeOGlpff2Uz6vOEH1Vzpi0iUz20A+lPVhPHtNUA=
+github.com/coder/websocket v1.8.15/go.mod h1:NX3SzP+inril6yawo5CQXx8+fk145lPDC6pumgx0mVg=
+github.com/goccy/go-yaml v1.19.2 h1:PmFC1S6h8ljIz6gMRBopkjP1TVT7xuwrButHID66PoM=
+github.com/goccy/go-yaml v1.19.2/go.mod h1:XBurs7gK8ATbW4ZPGKgcbrY1Br56PdM69F7LkFRi1kA=
