@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -119,6 +120,10 @@ func Load() (*Config, error) {
 		}
 	})
 
+	// 5. Consolidate paths and convert them to absolute paths.
+	if err := cfg.normalizePaths(); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to normalize configuration paths. err: %s\n", err.Error())
+	}
 	return &cfg, nil
 }
 
@@ -184,4 +189,29 @@ func ensureLoggerConfig(cfg *Config) {
 			Level: logger.LevelInfo,
 		}
 	}
+}
+
+// NormalizePaths converts all relative directory paths into absolute paths.
+// This prevents cascading errors (path stacking) in the Orchestrator.
+func (c *Config) normalizePaths() error {
+	paths := []*string{
+		&c.EnvDir,
+		&c.WatchDir,
+		&c.ProcessedDir,
+		&c.ErrorDir,
+	}
+
+	for _, p := range paths {
+		if *p == "" {
+			continue
+		}
+		abs, err := filepath.Abs(*p)
+		if err != nil {
+			return err
+		}
+		// cleans up path separators and references like "./foo/../bar"
+		*p = filepath.Clean(abs)
+	}
+
+	return nil
 }

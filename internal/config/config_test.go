@@ -16,14 +16,18 @@ import (
 func TestConfig_Defaults(t *testing.T) {
 	// Ensures that os.Args is reset in isolation for the test.
 	resetArgs(t, "nexfact-server")
+	// get absolute Path prefix
+	absPath, _ := filepath.Abs("./")
 
 	cfg, err := config.Load()
 	if err != nil {
 		t.Fatalf("unexpected error loading config defaults: %v", err)
 	}
 
-	if cfg.EnvDir != "./env" {
-		t.Errorf("expected default EnvDir %q, got %q", "./env", cfg.EnvDir)
+	fromEnv := "./env"
+	tmpPath := filepath.Join(absPath, fromEnv)
+	if cfg.EnvDir != tmpPath {
+		t.Errorf("expected default EnvDir %q, got %q", fromEnv, cfg.EnvDir)
 	}
 	if cfg.RPCAddr != "127.0.0.1:8080" {
 		t.Errorf("expected default RPCAddr %q, got %q", "127.0.0.1:8080", cfg.RPCAddr)
@@ -102,6 +106,9 @@ func TestConfig_EnvOverrides(t *testing.T) {
 }
 
 func TestConfig_FullPrecedence(t *testing.T) {
+	// get absolute Path prefix
+	absPath, _ := filepath.Abs("./")
+
 	// 1. create YAML Datei
 	tempDir := t.TempDir()
 	cfgPath := filepath.Join(tempDir, "config.yaml")
@@ -132,8 +139,10 @@ watch_dir: "from_yaml_watch"
 	}
 
 	// CLI overwrites ENV & YAML
-	if cfg.EnvDir != "from_cli" {
-		t.Errorf("expected EnvDir %q (from CLI), got %q", "from_cli", cfg.EnvDir)
+	fromCli := "from_cli"
+	tmpPath := filepath.Join(absPath, fromCli)
+	if cfg.EnvDir != tmpPath {
+		t.Errorf("expected EnvDir %q (from CLI), got %q", fromCli, cfg.EnvDir)
 	}
 
 	// ENV overwrites YAML (because no CLI-Flag for rpc-addr was set)
@@ -142,8 +151,10 @@ watch_dir: "from_yaml_watch"
 	}
 
 	// YAML is used (because neither ENV nor CLI were set)
-	if cfg.WatchDir != "from_yaml_watch" {
-		t.Errorf("expected WatchDir %q (from YAML), got %q", "from_yaml_watch", cfg.WatchDir)
+	fromYaml := "from_yaml_watch"
+	tmpPath = filepath.Join(absPath, fromYaml)
+	if cfg.WatchDir != tmpPath {
+		t.Errorf("expected WatchDir %q (from YAML), got %q", fromYaml, cfg.WatchDir)
 	}
 
 	// CLI overwrites LogLevel

@@ -12,31 +12,29 @@ import (
 	"time"
 
 	"codeberg.org/tiny-frameworks/nexfact-server/internal/config"
+	"codeberg.org/tiny-frameworks/nexfact-server/internal/testsetup"
 	"codeberg.org/tiny-frameworks/nexfact-server/internal/watcher"
 	"codeberg.org/tiny-frameworks/nexfact/orchestrator"
 	"codeberg.org/tiny-frameworks/nexutils/logger"
 )
 
 func TestDirectoryWatcherProcessesValidJson(t *testing.T) {
-	tempDir := t.TempDir()
-	watchDir := filepath.Join(tempDir, "watch")
-	processedDir := filepath.Join(tempDir, "processed")
-	errorDir := filepath.Join(tempDir, "error")
+	envRoot, resourcePath := testsetup.SetupTestEnv(t, testsetup.NATIVE)
+	lgr := logger.Logger.With("test_name", "dir_watcher")
+
+	orch, err := orchestrator.New(envRoot)
+	if err != nil {
+		t.Fatalf("failed to create orchestrator: %v", err)
+	}
+
+	watchDir := filepath.Join(envRoot, "watch")
+	processedDir := filepath.Join(envRoot, "processed")
+	errorDir := filepath.Join(envRoot, "error")
 	jsonFileName := "test_generate_fx.json"
 
 	_ = os.MkdirAll(watchDir, 0755)
 	_ = os.MkdirAll(processedDir, 0755)
 	_ = os.MkdirAll(errorDir, 0755)
-
-	lgr := logger.Logger.With("test", "dir_watcher")
-
-	testEnvParent := getTestEnvParent(t)
-
-	env := filepath.Join(testEnvParent, "env")
-	orch, err := orchestrator.New(env)
-	if err != nil {
-		t.Fatalf("failed to create orchestrator: %v", err)
-	}
 
 	cfg := config.Config{
 		WatchDir:     watchDir,
@@ -55,9 +53,9 @@ func TestDirectoryWatcherProcessesValidJson(t *testing.T) {
 	}
 
 	// 1. create Test-File in watchDir
-	testSource := filepath.Join(testEnvParent, "resources", jsonFileName)
+	testSource := filepath.Join(resourcePath, jsonFileName)
 	testFile := filepath.Join(watchDir, jsonFileName)
-	tmpFile := filepath.Join(tempDir, jsonFileName)
+	tmpFile := filepath.Join(envRoot, jsonFileName)
 
 	atomicCopy(t, testSource, testFile, tmpFile)
 
@@ -78,34 +76,6 @@ func TestDirectoryWatcherProcessesValidJson(t *testing.T) {
 	// stop Watcher
 	cancel()
 	w.Stop()
-}
-
-func getTestEnvParent(t *testing.T) string {
-	t.Helper()
-
-	// 1.Check if an environment variable is set (e.g., in go.work / local tests)
-	if envPath := os.Getenv("NEXFACT_TEST_ENV_PARENT"); envPath != "" {
-		return envPath
-	}
-
-	// 2. Fallback to the small local test data folder in the repo.
-	localPath := filepath.Join("testdata", "testenv")
-	if _, err := os.Stat(localPath); err == nil {
-		return localPath
-	}
-
-	// 3. Fallback to relative next-to-neighbor repo
-	relPath := filepath.Join("..", "..", "..", "nexfact", "orchestrator", "testdata")
-	absFile, err := filepath.Abs(relPath)
-	if err != nil {
-		t.Fatalf("Can not build absolute Path for %s", relPath)
-	}
-	if _, err := os.Stat(absFile); err == nil {
-		return absFile
-	}
-
-	t.Fatalf("No valid env found for testing")
-	return ""
 }
 
 // AtomicCopy copies srcPath nach dstPath atomar.

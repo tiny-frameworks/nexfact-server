@@ -221,6 +221,24 @@ use (
 
 ---
 
+## Organisation & Standards
+
+* **Copyright:** © 2026 Georg Hagn.
+* **Repository:** `codeberg.org/tiny-frameworks/nexfact-server`
+* **Lizenz:** Apache License, Version 2.0.
+
+*GSF-NexFact-Server ist ein unabhängiges Open-Source-Projekt und steht in keiner Verbindung zu Unternehmen mit ähnlichem Namen.*
+
+---
+
+## Kontakt & Support
+
+Für Anfragen, architektonische Diskussionen oder Sicherheitsfragen wende dich bitte an:
+
+📧 **georghagn [at] tiny-frameworks.io**
+
+---
+
 ## License
 
 Copyright (c) 2026 Georg Hagn.
@@ -228,3 +246,4 @@ Copyright (c) 2026 Georg Hagn.
 Lizenziert unter der **Apache License 2.0**.
 
 ---
+

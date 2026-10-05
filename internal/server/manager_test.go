@@ -39,7 +39,7 @@ func TestManagerLifecycleAndShutdown(t *testing.T) {
 
 	nullHandler := slog.NewTextHandler(io.Discard, nil)
 	nullLogger := slog.New(nullHandler)
-	mgr := server.NewManager(cfg, orch, nullLogger)
+	mgr := server.NewManager(&cfg, orch, nullLogger)
 
 	runCtx, cancelRun := context.WithCancel(context.Background())
 	defer cancelRun()
