@@ -1,0 +1,9 @@
+.git
+.gitignore
+.github
+*.md
+coverage.out
+watch/
+processed/
+error/
+tmp/

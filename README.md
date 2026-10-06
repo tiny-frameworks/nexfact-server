@@ -194,28 +194,19 @@ go build -o bin/nexfact-server ./cmd/nexfact-server
 
 ---
 
-## Testing
+## Running Integration Tests
 
-The test suite utilizes isolated temporary directories and dynamic ports:
+`nexfact-server` relies on reference environments, schemas, and test fixtures provided by the shared **`nexfact-assets`** repository.
 
-```bash
-# Run all tests with the Go race detector enabled
-go test -v -race ./...
-
-```
-
-For local multi-module testing, a `go.work` file in the parent workspace directory is recommended:
+To run the integration tests locally, ensure `nexfact-assets` is cloned alongside `nexfact-server`. During test execution, `nexfact-assets/setup` automatically copies the required test fixtures into an isolated, temporary directory (`t.TempDir()`) to guarantee side-effect-free test runs:
 
 ```go
-go 1.26.0
+import "codeberg.org/tiny-frameworks/nexfact-assets/setup"
 
-use (
-	./nexfact
-	./nexfact-server
-	./nexutils
-)
-
-```
+func TestMyService(t *testing.T) {
+    envRoot := setup.SetupTestEnv(t, setup.NATIVE)
+    // ... test executes against isolated tempDir
+}
 
 ---
 

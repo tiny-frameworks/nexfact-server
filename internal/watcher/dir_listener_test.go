@@ -11,15 +11,26 @@ import (
 	"testing"
 	"time"
 
+	assets "codeberg.org/tiny-frameworks/nexfact-assets"
 	"codeberg.org/tiny-frameworks/nexfact-server/internal/config"
-	"codeberg.org/tiny-frameworks/nexfact-server/internal/testsetup"
 	"codeberg.org/tiny-frameworks/nexfact-server/internal/watcher"
 	"codeberg.org/tiny-frameworks/nexfact/orchestrator"
 	"codeberg.org/tiny-frameworks/nexutils/logger"
 )
 
 func TestDirectoryWatcherProcessesValidJson(t *testing.T) {
-	envRoot, resourcePath := testsetup.SetupTestEnv(t, testsetup.NATIVE)
+
+	//envRoot, resourcePath := setup.SetupTestEnv(NATIVE)
+	setupMap, err := assets.SetupTestEnv("native")
+	if err != nil {
+		t.Fatalf("failed to create testSetup: %v", err)
+	}
+
+	envRoot := setupMap["envRoot"]
+	resourcePath := setupMap["resourcePath"]
+	tempDir := setupMap["tempDir"]
+	defer os.RemoveAll(tempDir)
+
 	lgr := logger.Logger.With("test_name", "dir_watcher")
 
 	orch, err := orchestrator.New(envRoot)

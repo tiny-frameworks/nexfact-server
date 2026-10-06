@@ -79,7 +79,6 @@ nexfact-server/
 │   ├── p2p/                 # P2P JSON-RPC Delegate & Adapter
 │   ├── server/              # Lifecycle Manager (P2P Node + Watcher)
 │   └── watcher/             # Atomic Directory Watcher
-├── config.json.example      # Sample configuration file
 ├── go.mod
 └── README.md
 
