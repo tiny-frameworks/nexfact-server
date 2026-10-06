@@ -20,7 +20,6 @@ import (
 
 func TestDirectoryWatcherProcessesValidJson(t *testing.T) {
 
-	//envRoot, resourcePath := setup.SetupTestEnv(NATIVE)
 	setupMap, err := assets.SetupTestEnv("native")
 	if err != nil {
 		t.Fatalf("failed to create testSetup: %v", err)

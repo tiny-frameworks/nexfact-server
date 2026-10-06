@@ -8,23 +8,31 @@ import (
 	"io"
 	"log/slog"
 	"net"
+	"os"
 	"testing"
 	"time"
 
+	assets "codeberg.org/tiny-frameworks/nexfact-assets"
 	"codeberg.org/tiny-frameworks/nexfact-server/internal/config"
 	"codeberg.org/tiny-frameworks/nexfact-server/internal/server"
-	"codeberg.org/tiny-frameworks/nexfact-server/internal/testsetup"
 	"codeberg.org/tiny-frameworks/nexfact/orchestrator"
 )
 
 func TestManagerLifecycleAndShutdown(t *testing.T) {
 
-	tempDir := t.TempDir()
-	addr := testsetup.GetFreeAddr(t)
-	envRoot, _ := testsetup.SetupTestEnv(t, testsetup.NATIVE)
+	setupMap, err := assets.SetupTestEnv("native")
+	if err != nil {
+		t.Fatalf("failed to create testSetup: %v", err)
+	}
 
+	envRoot := setupMap["envRoot"]
+	//resourcePath := setupMap["resourcePath"]
+	tempDir := setupMap["tempDir"]
+	defer os.RemoveAll(tempDir)
+
+	freeAddr, _ := assets.GetFreeAddr()
 	cfg := config.Config{
-		RPCAddr:           addr,
+		RPCAddr:           freeAddr,
 		HeartbeatInterval: 1 * time.Second,
 		WatchDir:          tempDir + "/watch",
 		ProcessedDir:      tempDir + "/processed",
@@ -53,9 +61,9 @@ func TestManagerLifecycleAndShutdown(t *testing.T) {
 	time.Sleep(100 * time.Millisecond)
 
 	// 2. Check if the RPC WebSocket port is reachable.
-	conn, err := net.DialTimeout("tcp", addr, 1*time.Second)
+	conn, err := net.DialTimeout("tcp", freeAddr, 1*time.Second)
 	if err != nil {
-		t.Fatalf("RPC Node is not listening on %s: %v", addr, err)
+		t.Fatalf("RPC Node is not listening on %s: %v", freeAddr, err)
 	}
 	conn.Close()
 

@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
+	assets "codeberg.org/tiny-frameworks/nexfact-assets"
 	"codeberg.org/tiny-frameworks/nexfact-server/internal/p2p"
-	"codeberg.org/tiny-frameworks/nexfact-server/internal/testsetup"
 
 	"codeberg.org/tiny-frameworks/nexfact/api/writer"
 	"codeberg.org/tiny-frameworks/nexfact/orchestrator"
@@ -28,8 +28,17 @@ func TestOrchestrator_Service_Documentation(t *testing.T) {
 	// DOKU 1: Explicit "Manual" Client
 	// =========================================================================
 	t.Run("Demo_Manual_Peer_Connection", func(t *testing.T) {
-		envRoot, resourcePath := testsetup.SetupTestEnv(t, testsetup.NATIVE)
-		freeAddr := testsetup.GetFreeAddr(t)
+		setupMap, err := assets.SetupTestEnv("native")
+		if err != nil {
+			t.Fatalf("failed to create testSetup: %v", err)
+		}
+
+		envRoot := setupMap["envRoot"]
+		resourcePath := setupMap["resourcePath"]
+		tempDir := setupMap["tempDir"]
+		defer os.RemoveAll(tempDir)
+
+		freeAddr, _ := assets.GetFreeAddr()
 		lgr := logger.Logger.With("test_name", t.Name())
 
 		orch, err := orchestrator.New(envRoot)
@@ -73,10 +82,19 @@ func TestOrchestrator_Service_Documentation(t *testing.T) {
 	// =========================================================================
 	t.Run("Demo_Managed_Client_Connection", func(t *testing.T) {
 		// create FRESCH Environment for second loop!
-		envRoot, resourcePath := testsetup.SetupTestEnv(t, testsetup.NATIVE)
-		freeAddr := testsetup.GetFreeAddr(t)
+		setupMap, err := assets.SetupTestEnv("native")
+		if err != nil {
+			t.Fatalf("failed to create testSetup: %v", err)
+		}
+
+		envRoot := setupMap["envRoot"]
+		resourcePath := setupMap["resourcePath"]
+		tempDir := setupMap["tempDir"]
+		defer os.RemoveAll(tempDir)
+
 		lgr := logger.Logger.With("test_name", t.Name())
 
+		freeAddr, _ := assets.GetFreeAddr()
 		orch, err := orchestrator.New(envRoot)
 		if err != nil {
 			t.Fatalf("failed to create orchestrator: %v", err)
