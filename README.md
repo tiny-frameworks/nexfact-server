@@ -156,7 +156,7 @@ Override specific parameters directly from the terminal without changing the con
 Ideal for Docker container deployments:
 
 ```bash
-export NEXFAVT_RPC_ADDR="0.0.0.0:8080"
+export NEXFACT_RPC_ADDR="0.0.0.0:8080"
 export NEXFACT_LOG_LEVEL="warn"
 ./nexfact-server
 
