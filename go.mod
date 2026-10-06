@@ -14,4 +14,3 @@ require (
 
 require github.com/coder/websocket v1.8.15 // indirect
 
-replace codeberg.org/tiny-frameworks/nexfact-assets => ../nexfact-assets
