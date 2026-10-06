@@ -32,7 +32,9 @@ GitHub is an automated mirror of the Codeberg repository:
 
 ## GSF-NexFact-Server
 
-`GSF-Nexfact-Server` is the service host and application adapter for the **GSF-Nexfact** invoice processing engine. It exposes the core module across multiple inbound communication channels—specifically P2P JSON-RPC over WebSockets and atomic local directory polling—while managing configuration, logging, and application lifecycle.
+`GSF-Nexfact-Server` is the service host and application adapter for the **GSF-Nexfact** invoice
+engine. It provides access to the core module via multiple inbound channels (P2P JSON-RPC over
+WebSockets as well as local directory polling) and manages configuration, logging, and lifecycle operations.
 
 This project is part of the **tiny-frameworks** initiative.
 
@@ -91,7 +93,7 @@ nexfact-server/
 `nexfact-server` uses a 4-tier configuration precedence model (**higher priority overrides lower priority**):
 
 1. **CLI Flags** (Highest Priority)
-2. **Environment Variables** (`NEXGATE_`)
+2. **Environment Variables** (`NEXFACT_`)
 3. **YAML Configuration File** (`config.yaml`)
 4. **Code Defaults** (Fallback values inside the application)
 
@@ -154,8 +156,8 @@ Override specific parameters directly from the terminal without changing the con
 Ideal for Docker container deployments:
 
 ```bash
-export NEXGATE_RPC_ADDR="0.0.0.0:8080"
-export NEXGATE_LOG_LEVEL="warn"
+export NEXFAVT_RPC_ADDR="0.0.0.0:8080"
+export NEXFACT_LOG_LEVEL="warn"
 ./nexfact-server
 
 ```

@@ -155,8 +155,8 @@ CLI Parameter überschreiben bestimmte Parameter direkt über das Terminal, ohne
 Ideal for Docker container deployments:
 
 ```bash
-export NEXGATE_RPC_ADDR="0.0.0.0:8080"
-export NEXGATE_LOG_LEVEL="warn"
+export NEXFACT_RPC_ADDR="0.0.0.0:8080"
+export NEXFACT_LOG_LEVEL="warn"
 ./nexfact-server
 
 ```
