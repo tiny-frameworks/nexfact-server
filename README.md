@@ -209,6 +209,7 @@ func TestMyService(t *testing.T) {
     envRoot := setup.SetupTestEnv(t, setup.NATIVE)
     // ... test executes against isolated tempDir
 }
+```
 
 ---
 
